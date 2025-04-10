@@ -5,11 +5,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV TZ=Asia/Shanghai
 
-# UTF-8 test
-RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
-ENV LANG=en_US.utf8
-ENV LC_ALL=C
-
 # 安装基础依赖
 RUN apt-get update && apt-get install -y \
     python3.12 python3-pip python3.12-venv git curl tzdata \
