@@ -1,32 +1,14 @@
-# 使用 CUDA 11.8 的官方运行时镜像
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+# 使用 Python 3.12 官方镜像（Debian，兼容性强）
+FROM python:3.12-slim
 
-# 设置环境变量
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-ENV TZ=Asia/Shanghai
-
-# 安装系统依赖 + Python 3.12
-# 安装基础依赖
+# 安装系统依赖
 RUN apt-get update && apt-get install -y \
-    curl git tzdata build-essential gnupg lsb-release software-properties-common
+    git curl build-essential ffmpeg libgl1 tzdata \
+    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && dpkg-reconfigure -f noninteractive tzdata \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 手动添加 deadsnakes PPA（替代 add-apt-repository）
-RUN curl -fsSL https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6A755776 \
-    | gpg --dearmor -o /usr/share/keyrings/deadsnakes.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/deadsnakes.gpg] http://ppa.launchpad.net/deadsnakes/ppa/ubuntu $(lsb_release -cs) main" \
-    > /etc/apt/sources.list.d/deadsnakes.list && \
-    apt-get update
-
-# 安装 Python 3.12
-RUN apt-get install -y python3.12 python3.12-venv python3.12-distutils
-
-# 安装 pip 并链接
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12 && \
-    ln -s /usr/bin/python3.12 /usr/bin/python && \
-    ln -s /usr/local/bin/pip /usr/bin/pip
-
-# 安装 PyTorch 稳定版（CUDA 11.8 对 Pascal 架构最稳定）
+# 安装 PyTorch for CUDA 11.8（适配 GTX 1070）
 RUN pip install --upgrade pip && \
     pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
 
@@ -41,5 +23,5 @@ RUN pip install -r requirements.txt
 # 暴露默认端口
 EXPOSE 8188
 
-# 启动 ComfyUI（如果你有需要也可以加启动参数）
+# 启动 ComfyUI
 CMD ["python", "main.py"]
